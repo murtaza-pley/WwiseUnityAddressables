@@ -112,7 +112,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			public Type[] methodArgTypes;
 		}
 
-		bool InitBankLoaded
+		public bool InitBankLoaded
 		{
 			get { return (InitBank != null && InitBank.loadState == BankLoadState.Loaded); }
 		}
