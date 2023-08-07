@@ -292,8 +292,6 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				}
 				bank.GCHandle.Free();
 
-				onBankLoadedCallback?.Invoke(result);
-
 				if (bank.StreamingMedia != null)
 				{
 					var assetKeys = new List<AssetReferenceStreamingMedia>();
@@ -332,7 +330,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 
 			// WG-60155 Release the bank asset AFTER streaming media assets are handled, otherwise Unity can churn needlessly if they are all in the same asset bundle!
 			Addressables.Release(AsyncHandle);
-			OnBankLoaded(bank);
+			OnBankLoaded(bank, onBankLoadedCallback);
 		}
 		public void UnloadBank(WwiseAddressableSoundBank bank, bool ignoreRefCount = false, bool removeFromBankDictionary = true)
 		{
@@ -412,11 +410,13 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			}
 		}
 
-		private void OnBankLoaded(WwiseAddressableSoundBank bank)
+		private void OnBankLoaded(WwiseAddressableSoundBank bank, OnBankLoadedCallback onBankLoadedCallback = null)
 		{
 			if (bank.loadState == BankLoadState.Loaded)
 			{
 				UnityEngine.Debug.Log($"Wwise Addressable Bank Manager : Loaded {bank.name} bank -  Bank ID : {bank.soundbankId}");
+
+				onBankLoadedCallback?.Invoke(AKRESULT.AK_Success);
 
 				if (InitBankLoaded && bank.name == InitBank.name)
 				{
@@ -451,6 +451,8 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			//Reset bank state if load failed
 			if (bank.loadState == BankLoadState.LoadFailed)
 			{
+				onBankLoadedCallback?.Invoke(AKRESULT.AK_Fail);
+
 				UnloadBank(bank, ignoreRefCount: true);
 			}
 
