@@ -185,7 +185,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 		}
 
 		//Todo : support decoding banks and saving decoded banks
-		public Task<AKRESULT> LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
+		public async Task<AKRESULT> LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
 		{
 			bank.decodeBank = decodeBank;
 			bank.saveDecodedBank = saveDecodedBank;
