@@ -272,9 +272,6 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				bank.GCHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
 				var result = AkSoundEngine.LoadBankMemoryCopy(bank.GCHandle.AddrOfPinnedObject(), (uint)data.Length, out uint bankID);
-
-				onBankLoadedCallback?.Invoke(result);
-
 				if (result == AKRESULT.AK_Success)
 				{
 					bank.soundbankId = bankID;
@@ -294,6 +291,8 @@ namespace AK.Wwise.Unity.WwiseAddressables
 					}
 				}
 				bank.GCHandle.Free();
+
+				onBankLoadedCallback?.Invoke(result);
 
 				if (bank.StreamingMedia != null)
 				{
