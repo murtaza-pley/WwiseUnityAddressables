@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using Cysharp.Threading.Tasks;
+using System.Threading.Tasks;
 
 namespace AK.Wwise.Unity.WwiseAddressables
 {
@@ -185,7 +185,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 		}
 
 		//Todo : support decoding banks and saving decoded banks
-		public async UniTask<AKRESULT> LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
+		public async Task<AKRESULT> LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
 		{
 			bank.decodeBank = decodeBank;
 			bank.saveDecodedBank = saveDecodedBank;
@@ -256,7 +256,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			return LoadBankAsync(bank, bankData);
 		}
 
-		public async UniTask<AKResult> LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
+		public async Task<AKRESULT> LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
 		{
 
 			var AsyncHandle = bankData.LoadAssetAsync();
