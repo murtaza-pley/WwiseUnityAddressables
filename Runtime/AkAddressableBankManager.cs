@@ -185,7 +185,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 		}
 
 		//Todo : support decoding banks and saving decoded banks
-		public async Task<AKRESULT> LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
+		public Task<AKRESULT> LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
 		{
 			bank.decodeBank = decodeBank;
 			bank.saveDecodedBank = saveDecodedBank;
@@ -260,11 +260,10 @@ namespace AK.Wwise.Unity.WwiseAddressables
 
 		public async Task<AKRESULT> LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
 		{
-
 			var AsyncHandle = bankData.LoadAssetAsync();
 			await AsyncHandle.Task;
 
-			var tcs = new TaskCompletionSource<AKRESULT>();
+			AKRESULT res;
 
 			if (AsyncHandle.IsValid() && AsyncHandle.Status == AsyncOperationStatus.Succeeded)
 			{
@@ -274,7 +273,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 
 				var result = AkSoundEngine.LoadBankMemoryCopy(bank.GCHandle.AddrOfPinnedObject(), (uint)data.Length, out uint bankID);
 
-				tcs.SetResult(result);
+				res = result;
 
 				if (result == AKRESULT.AK_Success)
 				{
@@ -329,14 +328,14 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				UnityEngine.Debug.LogError($"Wwise Addressable Bank Manager : Failed to load {bank.name} SoundBank");
 				bank.loadState = BankLoadState.LoadFailed;
 
-				tcs.SetResult(AKRESULT.AK_Fail);
+				res = AKRESULT.AK_Fail;
 			}
 
 			// WG-60155 Release the bank asset AFTER streaming media assets are handled, otherwise Unity can churn needlessly if they are all in the same asset bundle!
 			Addressables.Release(AsyncHandle);
 			OnBankLoaded(bank);
 
-			return tcs.Task;
+			return res;
 		}
 		public void UnloadBank(WwiseAddressableSoundBank bank, bool ignoreRefCount = false, bool removeFromBankDictionary = true)
 		{
