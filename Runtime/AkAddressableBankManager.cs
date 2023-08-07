@@ -1,4 +1,4 @@
-﻿#if AK_WWISE_ADDRESSABLES && UNITY_ADDRESSABLES
+﻿// #if AK_WWISE_ADDRESSABLES && UNITY_ADDRESSABLES
 
 using System;
 using System.Collections.Concurrent;
@@ -40,6 +40,9 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			}
 		}
 		private static AkAddressableBankManager instance;
+
+		public delegate void OnBankLoadedCallback(AKRESULT result);
+		public delegate void OnErrorCallback(string bankName, string errorMessage);
 		public static AkAddressableBankManager Instance
 		{
 			get
@@ -185,7 +188,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 		}
 
 		//Todo : support decoding banks and saving decoded banks
-		public void LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
+		public void LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true, OnBankLoadedCallback onBankLoadedCallback = null, OnErrorCallback onErrorCallback = null)
 		{
 			bank.decodeBank = decodeBank;
 			bank.saveDecodedBank = saveDecodedBank;
@@ -253,10 +256,10 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				}
 			}
 
-			LoadBankAsync(bank, bankData);
+			LoadBankAsync(bank, bankData, onBankLoadedCallback, onErrorCallback);
 		}
 
-		public async Task LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
+		public async Task LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData, OnBankLoadedCallback onBankLoadedCallback = null, OnErrorCallback onErrorCallback = null)
 		{
 
 			var AsyncHandle = bankData.LoadAssetAsync();
@@ -269,6 +272,9 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				bank.GCHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
 				var result = AkSoundEngine.LoadBankMemoryCopy(bank.GCHandle.AddrOfPinnedObject(), (uint)data.Length, out uint bankID);
+
+				onBankLoadedCallback?.Invoke(result);
+
 				if (result == AKRESULT.AK_Success)
 				{
 					bank.soundbankId = bankID;
@@ -321,6 +327,8 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			{
 				UnityEngine.Debug.LogError($"Wwise Addressable Bank Manager : Failed to load {bank.name} SoundBank");
 				bank.loadState = BankLoadState.LoadFailed;
+
+				onErrorCallback?.Invoke(bank.name, "Failed to load the bank.");
 			}
 
 			// WG-60155 Release the bank asset AFTER streaming media assets are handled, otherwise Unity can churn needlessly if they are all in the same asset bundle!
@@ -444,9 +452,9 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			//Reset bank state if load failed
 			if (bank.loadState == BankLoadState.LoadFailed)
 			{
-				UnloadBank(bank, ignoreRefCount : true);
+				UnloadBank(bank, ignoreRefCount: true);
 			}
-			
+
 			if (m_banksToUnload.Keys.Contains(bank.name))
 			{
 				UnloadBank(bank);
@@ -460,4 +468,4 @@ namespace AK.Wwise.Unity.WwiseAddressables
 	}
 }
 
-#endif // AK_WWISE_ADDRESSABLES
+// #endif // AK_WWISE_ADDRESSABLES
