@@ -185,7 +185,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 		}
 
 		//Todo : support decoding banks and saving decoded banks
-		public async AKRESULT LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
+		public async Task<AKRESULT> LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
 		{
 			bank.decodeBank = decodeBank;
 			bank.saveDecodedBank = saveDecodedBank;
@@ -258,13 +258,13 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			return result;
 		}
 
-		public async AKRESULT LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
+		public async Task<AKRESULT> LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
 		{
 
 			var AsyncHandle = bankData.LoadAssetAsync();
 			await AsyncHandle.Task;
 
-			AKRESULT result;
+			var tcs = new TaskCompletionSource<AKRESULT>();
 
 			if (AsyncHandle.IsValid() && AsyncHandle.Status == AsyncOperationStatus.Succeeded)
 			{
@@ -272,7 +272,10 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				var data = AsyncHandle.Result.RawData;
 				bank.GCHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
-				result = AkSoundEngine.LoadBankMemoryCopy(bank.GCHandle.AddrOfPinnedObject(), (uint)data.Length, out uint bankID);
+				var result = AkSoundEngine.LoadBankMemoryCopy(bank.GCHandle.AddrOfPinnedObject(), (uint)data.Length, out uint bankID);
+
+				tcs.SetResult(result);
+
 				if (result == AKRESULT.AK_Success)
 				{
 					bank.soundbankId = bankID;
@@ -326,14 +329,14 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				UnityEngine.Debug.LogError($"Wwise Addressable Bank Manager : Failed to load {bank.name} SoundBank");
 				bank.loadState = BankLoadState.LoadFailed;
 
-				result = AKRESULT.AK_Fail;
+				tcs.SetResult(AKRESULT.AK_Fail);
 			}
 
 			// WG-60155 Release the bank asset AFTER streaming media assets are handled, otherwise Unity can churn needlessly if they are all in the same asset bundle!
 			Addressables.Release(AsyncHandle);
 			OnBankLoaded(bank);
 
-			return result;
+			return tcs.Task;
 		}
 		public void UnloadBank(WwiseAddressableSoundBank bank, bool ignoreRefCount = false, bool removeFromBankDictionary = true)
 		{
