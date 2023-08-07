@@ -171,11 +171,11 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			}
 		}
 
-		public void LoadInitBank()
+		public void LoadInitBank(OnBankLoadedCallback onBankLoadedCallback = null)
 		{
 			if (InitBank != null)
 			{
-				LoadBank(InitBank, addToBankDictionary: false);
+				LoadBank(InitBank, addToBankDictionary: false, onBankLoadedCallback: onBankLoadedCallback);
 			}
 		}
 
