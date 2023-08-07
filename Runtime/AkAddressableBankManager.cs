@@ -256,7 +256,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			return LoadBankAsync(bank, bankData);
 		}
 
-		public async Task<AKRESULT> LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
+		public async AKRESULT LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
 		{
 
 			var AsyncHandle = bankData.LoadAssetAsync();
