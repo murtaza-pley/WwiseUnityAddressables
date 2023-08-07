@@ -185,7 +185,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 		}
 
 		//Todo : support decoding banks and saving decoded banks
-		public async Task<AKRESULT> LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
+		public async AKRESULT LoadBank(WwiseAddressableSoundBank bank, bool decodeBank = false, bool saveDecodedBank = false, bool addToBankDictionary = true)
 		{
 			bank.decodeBank = decodeBank;
 			bank.saveDecodedBank = saveDecodedBank;
@@ -253,7 +253,9 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				}
 			}
 
-			return LoadBankAsync(bank, bankData);
+			var result = await LoadBankAsync(bank, bankData);
+
+			return result;
 		}
 
 		public async AKRESULT LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData)
