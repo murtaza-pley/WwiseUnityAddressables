@@ -256,7 +256,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				}
 			}
 
-			LoadBankAsync(bank, bankData, onBankLoadedCallback, onErrorCallback).Wait();
+			LoadBankAsync(bank, bankData, onBankLoadedCallback, onErrorCallback);
 		}
 
 		public async Task LoadBankAsync(WwiseAddressableSoundBank bank, AssetReferenceWwiseBankData bankData, OnBankLoadedCallback onBankLoadedCallback = null, OnErrorCallback onErrorCallback = null)
