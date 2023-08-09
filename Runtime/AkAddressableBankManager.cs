@@ -15,9 +15,14 @@ namespace AK.Wwise.Unity.WwiseAddressables
 {
 	public enum AkAddressableLoadBankResult
 	{
-		AK_Default = 0,
+		AK_Unknown = 0,
 		AK_Success = 1,
-		AK_Fail = 2
+		AK_AlreadyLoading = 2,
+		AK_InitBankNotLoaded = 3,
+		AK_AlreadyLoaded = 4,
+		AK_BankReferenceNotSet = 5,
+		AK_FailedLoadingWithLanguage = 6,
+		AK_LoadFail = 7
 	}
 	public class AkAddressableBankManager
 	{
@@ -209,19 +214,19 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				{
 					UnityEngine.Debug.Log($"Wwise Addressable Bank Manager: {bank.name} bank will be loaded after the init bank is loaded");
 					bank.loadState = BankLoadState.WaitingForInitBankToLoad;
-					return AkAddressableLoadBankResult.AK_Default;
+					return AkAddressableLoadBankResult.AK_InitBankNotLoaded;
 				}
 			}
 			if (bank.loadState == BankLoadState.Loading)
 			{
 				bank.refCount += 1;
-				return AkAddressableLoadBankResult.AK_Default;
+				return AkAddressableLoadBankResult.AK_AlreadyLoading;
 			}
 
 			if (bank.loadState == BankLoadState.Loaded)
 			{
 				bank.refCount += 1;
-				return AkAddressableLoadBankResult.AK_Default;
+				return AkAddressableLoadBankResult.AK_AlreadyLoaded;
 			}
 
 			bank.refCount += 1;
@@ -231,7 +236,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 			{
 				UnityEngine.Debug.LogError($"Wwise Addressable Bank Manager : {bank.name} could not be loaded - Bank reference not set");
 				m_AddressableBanks.TryRemove(bank.name, out _);
-				return AkAddressableLoadBankResult.AK_Default;
+				return AkAddressableLoadBankResult.AK_BankReferenceNotSet;
 			}
 
 			AssetReferenceWwiseBankData bankData;
@@ -254,7 +259,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				{
 					UnityEngine.Debug.LogError($"Wwise Addressable Bank Manager: {bank.name} could not be loaded in {currentLanguage} language ");
 					m_AddressableBanks.TryRemove(bank.name, out _);
-					return AkAddressableLoadBankResult.AK_Default;
+					return AkAddressableLoadBankResult.AK_FailedLoadingWithLanguage;
 				}
 			}
 
@@ -277,13 +282,11 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				bank.GCHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
 
 				var result = AkSoundEngine.LoadBankMemoryCopy(bank.GCHandle.AddrOfPinnedObject(), (uint)data.Length, out uint bankID);
-
-				res = AkAddressableLoadBankResult.AK_Success;
-
 				if (result == AKRESULT.AK_Success)
 				{
 					bank.soundbankId = bankID;
 					bank.loadState = BankLoadState.Loaded;
+					res = AkAddressableLoadBankResult.AK_Success;
 				}
 				else
 				{
@@ -297,6 +300,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 					{
 						UnityEngine.Debug.Log($"Wwise Addressable Bank Manager : Sound Engine failed to load {bank.name} SoundBank");
 					}
+					res = AkAddressableLoadBankResult.AK_LoadFail;
 				}
 				bank.GCHandle.Free();
 
@@ -333,7 +337,7 @@ namespace AK.Wwise.Unity.WwiseAddressables
 				UnityEngine.Debug.LogError($"Wwise Addressable Bank Manager : Failed to load {bank.name} SoundBank");
 				bank.loadState = BankLoadState.LoadFailed;
 
-				res = AkAddressableLoadBankResult.AK_Fail;
+				res = AkAddressableLoadBankResult.AK_LoadFail;
 			}
 
 			// WG-60155 Release the bank asset AFTER streaming media assets are handled, otherwise Unity can churn needlessly if they are all in the same asset bundle!
